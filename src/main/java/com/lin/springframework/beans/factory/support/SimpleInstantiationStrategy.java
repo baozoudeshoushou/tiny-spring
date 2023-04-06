@@ -18,7 +18,7 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
         Class<?> beanClass = beanDefinition.getBeanClass();
         try {
             if (ctor != null) {
-                return beanClass.getDeclaredConstructor(ctor.getParameterTypes()).newInstance();
+                return beanClass.getDeclaredConstructor(ctor.getParameterTypes()).newInstance(args);
             }
             else {
                 return beanClass.getDeclaredConstructor().newInstance();
