@@ -16,4 +16,17 @@ public interface BeanDefinitionRegistry {
      */
     void registerBeanDefinition(String beanName, BeanDefinition beanDefinition);
 
+    /**
+     * Return the BeanDefinition for the given bean name.
+     * @param beanName name of the bean to find a definition for
+     * @return the BeanDefinition for the given name
+     */
+    BeanDefinition getBeanDefinition(String beanName);
+
+    /**
+     * Remove the BeanDefinition for the given name.
+     * @param beanName the name of the bean instance to register
+     */
+    void removeBeanDefinition(String beanName);
+
 }
