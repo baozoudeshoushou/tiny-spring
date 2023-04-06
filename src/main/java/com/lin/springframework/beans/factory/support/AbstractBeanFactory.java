@@ -11,13 +11,13 @@ import com.lin.springframework.beans.factory.config.BeanDefinition;
 public abstract class AbstractBeanFactory extends DefaultSingletonBeanRegistry implements BeanFactory {
 
     @Override
-    public Object getBean(String name) {
+    public Object getBean(String name, Object... args) {
         Object bean = getSingleton(name);
         if (bean != null) {
             return bean;
         }
         BeanDefinition beanDefinition = getBeanDefinition(name);
-        return createBean(name, beanDefinition);
+        return createBean(name, beanDefinition, args);
     }
 
     /**
@@ -32,9 +32,10 @@ public abstract class AbstractBeanFactory extends DefaultSingletonBeanRegistry i
      * Create a bean instance for the given merged bean definition
      * @param beanName the name of the bean
      * @param beanDefinition the bean definition for the bean
+     * @param args explicit arguments to use for constructor or factory method invocation
      * @return a new instance of the bean
      * @throws BeansException
      */
-    protected abstract Object createBean(String beanName, BeanDefinition beanDefinition)
+    protected abstract Object createBean(String beanName, BeanDefinition beanDefinition, Object[] args)
             throws BeansException;
 }
