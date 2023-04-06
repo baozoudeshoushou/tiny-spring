@@ -3,6 +3,7 @@ package com.lin.springframework;
 import com.lin.springframework.bean.UserService;
 import com.lin.springframework.beans.factory.config.BeanDefinition;
 import com.lin.springframework.beans.factory.support.DefaultListableBeanFactory;
+import com.lin.springframework.beans.factory.support.SimpleInstantiationStrategy;
 import org.junit.Test;
 
 /**
@@ -25,5 +26,15 @@ public class ApiTest {
         singletonUserService.queryUserInfo();
     }
 
+    @Test
+    public void testInstantiationStrategy() {
+        DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
+
+        BeanDefinition beanDefinition = new BeanDefinition(UserService.class);
+        beanFactory.registerBeanDefinition("userService", beanDefinition);
+
+        UserService userService = (UserService) beanFactory.getBean("userService", "lin");
+        userService.queryUserInfo();
+    }
 
 }
