@@ -2,8 +2,8 @@ package com.lin.springframework.beans.factory.support;
 
 import com.lin.springframework.beans.factory.config.SingletonBeanRegistry;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @Author linjiayi5
@@ -11,7 +11,19 @@ import java.util.Map;
  */
 public class DefaultSingletonBeanRegistry implements SingletonBeanRegistry {
 
-    private Map<String, Object> singletonObjects = new HashMap<>();
+    private final Map<String, Object> singletonObjects = new ConcurrentHashMap<>();
+
+    @Override
+    public void registerSingleton(String beanName, Object singletonObject) {
+        synchronized (this.singletonObjects) {
+            Object oldObject = this.singletonObjects.get(beanName);
+            if (oldObject != null) {
+                throw new IllegalStateException("Could not register object [" + singletonObject +
+                        "] under bean name '" + beanName + "': there is already object [" + oldObject + "] bound");
+            }
+            addSingleton(beanName, singletonObject);
+        }
+    }
 
     @Override
     public Object getSingleton(String beanName) {
