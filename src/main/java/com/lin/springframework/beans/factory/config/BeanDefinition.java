@@ -29,4 +29,7 @@ public class BeanDefinition {
         return beanClass;
     }
 
+    public PropertyValues getPropertyValues() {
+        return propertyValues;
+    }
 }
