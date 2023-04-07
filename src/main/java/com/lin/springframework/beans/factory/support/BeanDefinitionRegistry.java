@@ -29,4 +29,10 @@ public interface BeanDefinitionRegistry {
      */
     void removeBeanDefinition(String beanName);
 
+    /**
+     * Check if this registry contains a bean definition with the given name.
+     * @param beanName the name of the bean to look for
+     * @return if this registry contains a bean definition with the given name
+     */
+    boolean containsBeanDefinition(String beanName);
 }
