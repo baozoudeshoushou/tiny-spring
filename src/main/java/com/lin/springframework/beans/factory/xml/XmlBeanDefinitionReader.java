@@ -62,6 +62,16 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
         return loadBeanDefinitions(resource);
     }
 
+    @Override
+    public int loadBeanDefinitions(String... locations) throws BeansException {
+        Assert.notNull(locations, "Locations must not be null");
+        int count = 0;
+        for (String location : locations) {
+            count += loadBeanDefinitions(location);
+        }
+        return count;
+    }
+
     /**
      * Actually load bean definitions from the specified XML file.
      *

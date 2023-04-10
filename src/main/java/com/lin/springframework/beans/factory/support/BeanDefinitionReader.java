@@ -49,5 +49,11 @@ public interface BeanDefinitionReader {
      */
     int loadBeanDefinitions(String location) throws BeansException;
 
-
+    /**
+     * Load bean definitions from the specified resource locations.
+     * @param locations the resource locations, to be loaded with the {@code ResourceLoader}
+     * @return the number of bean definitions found
+     * @throws BeansException in case of loading or parsing errors
+     */
+    int loadBeanDefinitions(String... locations) throws BeansException;
 }
