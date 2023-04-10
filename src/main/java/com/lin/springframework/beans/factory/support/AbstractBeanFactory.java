@@ -1,7 +1,9 @@
 package com.lin.springframework.beans.factory.support;
 
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.StrUtil;
 import com.lin.springframework.beans.BeansException;
+import com.lin.springframework.beans.factory.DisposableBean;
 import com.lin.springframework.beans.factory.config.BeanDefinition;
 import com.lin.springframework.beans.factory.config.BeanPostProcessor;
 import com.lin.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -75,4 +77,20 @@ public abstract class AbstractBeanFactory extends DefaultSingletonBeanRegistry i
     public List<BeanPostProcessor> getBeanPostProcessors() {
         return beanPostProcessors;
     }
+
+    /**
+     * Add the given bean to the list of disposable beans in this factory,
+     * registering its DisposableBean interface and/or the given destroy method
+     * to be called on factory shutdown (if applicable). Only applies to singletons.
+     * @param beanName the name of the bean
+     * @param bean the bean instance
+     * @param beanDefinition the bean definition for the bean
+     * @see #registerDisposableBean
+     */
+    protected void registerDisposableBeanIfNecessary(String beanName, Object bean, BeanDefinition beanDefinition) {
+        if (bean instanceof DisposableBean || StrUtil.isNotEmpty(beanDefinition.getDestroyMethodName())) {
+            registerDisposableBean(beanName, new DisposableBeanAdapter(bean, beanName, beanDefinition));
+        }
+    }
+
 }
