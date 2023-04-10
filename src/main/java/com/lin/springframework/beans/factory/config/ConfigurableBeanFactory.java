@@ -12,4 +12,11 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 
     String SCOPE_PROTOTYPE = "prototype";
 
+    /**
+     * Add a new BeanPostProcessor that will get applied to beans created
+     * by this factory. To be invoked during factory configuration.
+     * @param beanPostProcessor the post-processor to register
+     */
+    void addBeanPostProcessor(BeanPostProcessor beanPostProcessor);
+
 }

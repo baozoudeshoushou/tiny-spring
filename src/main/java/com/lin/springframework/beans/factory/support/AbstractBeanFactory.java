@@ -1,14 +1,22 @@
 package com.lin.springframework.beans.factory.support;
 
+import cn.hutool.core.lang.Assert;
 import com.lin.springframework.beans.BeansException;
-import com.lin.springframework.beans.factory.BeanFactory;
 import com.lin.springframework.beans.factory.config.BeanDefinition;
+import com.lin.springframework.beans.factory.config.BeanPostProcessor;
+import com.lin.springframework.beans.factory.config.ConfigurableBeanFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @Author linjiayi5
  * @Date 2023/4/4 16:40:57
  */
-public abstract class AbstractBeanFactory extends DefaultSingletonBeanRegistry implements BeanFactory {
+public abstract class AbstractBeanFactory extends DefaultSingletonBeanRegistry implements ConfigurableBeanFactory {
+
+    /** BeanPostProcessors to apply. */
+    private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
 
     @Override
     public Object getBean(String name) throws BeansException {
@@ -52,4 +60,19 @@ public abstract class AbstractBeanFactory extends DefaultSingletonBeanRegistry i
      */
     protected abstract Object createBean(String beanName, BeanDefinition beanDefinition, Object[] args)
             throws BeansException;
+
+    @Override
+    public void addBeanPostProcessor(BeanPostProcessor beanPostProcessor) {
+        Assert.notNull(beanPostProcessor, "BeanPostProcessor must not be null");
+        synchronized (this.beanPostProcessors) {
+            // Remove from old position, if any
+            this.beanPostProcessors.remove(beanPostProcessor);
+            // Add to end of list
+            this.beanPostProcessors.add(beanPostProcessor);
+        }
+    }
+
+    public List<BeanPostProcessor> getBeanPostProcessors() {
+        return beanPostProcessors;
+    }
 }
