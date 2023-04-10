@@ -1,8 +1,12 @@
 package com.lin.springframework.beans.factory.support;
 
+import com.lin.springframework.beans.BeansException;
+import com.lin.springframework.beans.factory.DisposableBean;
 import com.lin.springframework.beans.factory.config.SingletonBeanRegistry;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -12,6 +16,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class DefaultSingletonBeanRegistry implements SingletonBeanRegistry {
 
     private final Map<String, Object> singletonObjects = new ConcurrentHashMap<>();
+
+    private final Map<String, DisposableBean> disposableBeans = new LinkedHashMap<>();
 
     @Override
     public void registerSingleton(String beanName, Object singletonObject) {
@@ -39,5 +45,35 @@ public class DefaultSingletonBeanRegistry implements SingletonBeanRegistry {
         singletonObjects.put(beanName, singletonObject);
     }
 
+    /**
+     * Add the given bean to the list of disposable beans in this registry.
+     * <p>Disposable beans usually correspond to registered singletons,
+     * matching the bean name but potentially being a different instance
+     * (for example, a DisposableBean adapter for a singleton that does not
+     * naturally implement Spring's DisposableBean interface).
+     * @param beanName the name of the bean
+     * @param bean the bean instance
+     */
+    public void registerDisposableBean(String beanName, DisposableBean bean) {
+        synchronized (this.disposableBeans) {
+            this.disposableBeans.put(beanName, bean);
+        }
+    }
+
+    public void destroySingletons() {
+        Set<String> keySet = this.disposableBeans.keySet();
+        Object[] disposableBeanNames = keySet.toArray();
+        for (int i = 0; i < disposableBeanNames.length; i++) {
+            Object beanName = disposableBeanNames[i];
+            DisposableBean disposableBean = this.disposableBeans.remove(beanName);
+            try {
+                // TODO Destroy the given bean. Must destroy beans that depend on the given
+                //	 * bean before the bean itself. Should not throw any exceptions.
+                disposableBean.destroy();
+            } catch (Exception e) {
+                throw new BeansException("Destroy method on bean with name '" + beanName + "' threw an exception", e);
+            }
+        }
+    }
 
 }
