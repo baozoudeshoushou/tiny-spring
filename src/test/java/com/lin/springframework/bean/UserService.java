@@ -1,6 +1,9 @@
 package com.lin.springframework.bean;
 
-public class UserService {
+import com.lin.springframework.beans.factory.DisposableBean;
+import com.lin.springframework.beans.factory.InitializingBean;
+
+public class UserService implements InitializingBean, DisposableBean {
 
     private String uId;
 
@@ -12,6 +15,16 @@ public class UserService {
 
     public String queryUserInfo() {
         return userDao.queryUserName(uId) + "," + company + "," + location;
+    }
+
+    @Override
+    public void destroy() throws Exception {
+        System.out.println("执行：UserService.destroy");
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        System.out.println("执行：UserService.afterPropertiesSet");
     }
 
     public String getUId() {
