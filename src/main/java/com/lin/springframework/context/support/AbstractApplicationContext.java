@@ -17,25 +17,43 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader i
 
     @Override
     public void refresh() throws BeansException {
-        // 1. 创建 Beanfactory，并加载 BeanDefinition
-        refreshBeanFactory();
+        // 1. 创建 BeanFactory，加载 BeanDefinition
+        ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
-        // 2. 获取 BeanFactory
-        ConfigurableListableBeanFactory beanFactory = getBeanFactory();
-
-        // 3. 在 Bean 实例化之前执行 BeanFactoryPostProcessor
+        // 2. 在 Bean 实例化之前执行 BeanFactoryPostProcessor
         invokeBeanFactoryPostProcessors(beanFactory);
 
-        // 4. BeanPostProcessor 需要提前于其他 Bean 对象实例化之前执行注册操作
+        // 3. BeanPostProcessor 需要提前于其他 Bean 对象实例化之前执行注册操作
         registerBeanPostProcessors(beanFactory);
 
-        // 5. 提前实例化单例 Bean 对象
+        // 4. 提前实例化单例 Bean 对象
         beanFactory.preInstantiateSingletons();
 
     }
 
+    /**
+     * Tell the subclass to refresh the internal bean factory.
+     * @return the fresh BeanFactory instance
+     * @see #refreshBeanFactory()
+     * @see #getBeanFactory()
+     */
+    protected ConfigurableListableBeanFactory obtainFreshBeanFactory() {
+        refreshBeanFactory();
+        return getBeanFactory();
+    }
+
+    /**
+     * Subclasses must implement this method to perform the actual configuration load.
+     * The method is invoked by {@link #refresh()} before any other initialization work.
+     * @throws BeansException
+     */
     protected abstract void refreshBeanFactory() throws BeansException;
 
+    /**
+     * Subclasses must return their internal bean factory here. They should implement the
+     * lookup efficiently, so that it can be called repeatedly without a performance penalty.
+     * @return this application context's internal bean factory (never {@code null})
+     */
     protected abstract ConfigurableListableBeanFactory getBeanFactory();
 
     /**
@@ -60,6 +78,31 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader i
         for (BeanPostProcessor beanPostProcessor : beanPostProcessorMap.values()) {
             beanFactory.addBeanPostProcessor(beanPostProcessor);
         }
+    }
+
+    @Override
+    public Object getBean(String name) throws BeansException {
+        return getBeanFactory().getBean(name);
+    }
+
+    @Override
+    public Object getBean(String name, Object... args) throws BeansException {
+        return getBeanFactory().getBean(name, args);
+    }
+
+    @Override
+    public <T> T getBean(String name, Class<T> requiredType) throws BeansException {
+        return getBeanFactory().getBean(name, requiredType);
+    }
+
+    @Override
+    public <T> Map<String, T> getBeansOfType(Class<T> type) throws BeansException {
+        return getBeanFactory().getBeansOfType(type);
+    }
+
+    @Override
+    public String[] getBeanDefinitionNames() {
+        return getBeanFactory().getBeanDefinitionNames();
     }
 
 }
