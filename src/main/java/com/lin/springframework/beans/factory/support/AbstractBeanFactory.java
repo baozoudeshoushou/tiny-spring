@@ -4,6 +4,7 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
 import com.lin.springframework.beans.BeansException;
 import com.lin.springframework.beans.factory.DisposableBean;
+import com.lin.springframework.beans.factory.FactoryBean;
 import com.lin.springframework.beans.factory.config.BeanDefinition;
 import com.lin.springframework.beans.factory.config.BeanPostProcessor;
 import com.lin.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -16,35 +17,44 @@ import java.util.List;
  * @Author linjiayi5
  * @Date 2023/4/4 16:40:57
  */
-public abstract class AbstractBeanFactory extends DefaultSingletonBeanRegistry implements ConfigurableBeanFactory {
+public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport implements ConfigurableBeanFactory {
 
     private ClassLoader beanClassLoader = ClassUtils.getDefaultClassLoader();
 
     /** BeanPostProcessors to apply. */
     private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
 
+    //---------------------------------------------------------------------
+    // Implementation of BeanFactory interface
+    //---------------------------------------------------------------------
+
     @Override
     public Object getBean(String name) throws BeansException {
-        return doGetBean(name, null);
+        return doGetBean(name, null, null);
     }
 
     @Override
     public Object getBean(String name, Object... args) {
-        return doGetBean(name, args);
+        return doGetBean(name, null, args);
     }
 
     @Override
     public <T> T getBean(String name, Class<T> requiredType) throws BeansException {
-        return (T) getBean(name);
+        return doGetBean(name, requiredType, null);
     }
 
-    protected Object doGetBean(final String name, final Object[] args) {
-        Object bean = getSingleton(name);
-        if (bean != null) {
-            return bean;
+    protected <T> T doGetBean(final String name, Class<T> requiredType, final Object[] args) {
+        // Get from cache
+        Object sharedInstance = getSingleton(name);
+        if (sharedInstance != null) {
+            // 可能是 bean，也可能是 factoryBean
+            return (T) getObjectForBeanInstance(sharedInstance, name);
         }
+
         BeanDefinition beanDefinition = getBeanDefinition(name);
-        return createBean(name, beanDefinition, args);
+        // Create bean instance.
+        Object bean = createBean(name, beanDefinition, args);
+        return (T) getObjectForBeanInstance(bean, name);
     }
 
     /**
@@ -66,8 +76,31 @@ public abstract class AbstractBeanFactory extends DefaultSingletonBeanRegistry i
     protected abstract Object createBean(String beanName, BeanDefinition beanDefinition, Object[] args)
             throws BeansException;
 
+    /**
+     * Return the list of BeanPostProcessors that will get applied
+     * to beans created with this factory.
+     */
     public List<BeanPostProcessor> getBeanPostProcessors() {
         return beanPostProcessors;
+    }
+
+    /**
+     * Get the object for the given bean instance, either the bean
+     * instance itself or its created object in case of a FactoryBean.
+     * @param beanInstance the shared bean instance
+     * @param beanName the canonical bean name
+     * @return the object to expose for the bean
+     */
+    protected Object getObjectForBeanInstance(Object beanInstance, String beanName) {
+        if (!(beanInstance instanceof FactoryBean<?>)) {
+            return beanInstance;
+        }
+        Object object = getCachedObjectForFactoryBean(beanName);
+        if (object == null) {
+            FactoryBean<?> factoryBean = (FactoryBean<?>) beanInstance;
+            object = getObjectFromFactoryBean(factoryBean, beanName);
+        }
+        return object;
     }
 
     /**
@@ -80,6 +113,9 @@ public abstract class AbstractBeanFactory extends DefaultSingletonBeanRegistry i
      * @see #registerDisposableBean
      */
     protected void registerDisposableBeanIfNecessary(String beanName, Object bean, BeanDefinition beanDefinition) {
+        if (!beanDefinition.isSingleton()) {
+            return;
+        }
         if (bean instanceof DisposableBean || StrUtil.isNotEmpty(beanDefinition.getDestroyMethodName())) {
             registerDisposableBean(beanName, new DisposableBeanAdapter(bean, beanName, beanDefinition));
         }
