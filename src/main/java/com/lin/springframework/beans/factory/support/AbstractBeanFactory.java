@@ -7,6 +7,7 @@ import com.lin.springframework.beans.factory.DisposableBean;
 import com.lin.springframework.beans.factory.config.BeanDefinition;
 import com.lin.springframework.beans.factory.config.BeanPostProcessor;
 import com.lin.springframework.beans.factory.config.ConfigurableBeanFactory;
+import com.lin.springframework.utils.ClassUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +17,8 @@ import java.util.List;
  * @Date 2023/4/4 16:40:57
  */
 public abstract class AbstractBeanFactory extends DefaultSingletonBeanRegistry implements ConfigurableBeanFactory {
+
+    private ClassLoader beanClassLoader = ClassUtils.getDefaultClassLoader();
 
     /** BeanPostProcessors to apply. */
     private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
@@ -63,17 +66,6 @@ public abstract class AbstractBeanFactory extends DefaultSingletonBeanRegistry i
     protected abstract Object createBean(String beanName, BeanDefinition beanDefinition, Object[] args)
             throws BeansException;
 
-    @Override
-    public void addBeanPostProcessor(BeanPostProcessor beanPostProcessor) {
-        Assert.notNull(beanPostProcessor, "BeanPostProcessor must not be null");
-        synchronized (this.beanPostProcessors) {
-            // Remove from old position, if any
-            this.beanPostProcessors.remove(beanPostProcessor);
-            // Add to end of list
-            this.beanPostProcessors.add(beanPostProcessor);
-        }
-    }
-
     public List<BeanPostProcessor> getBeanPostProcessors() {
         return beanPostProcessors;
     }
@@ -91,6 +83,31 @@ public abstract class AbstractBeanFactory extends DefaultSingletonBeanRegistry i
         if (bean instanceof DisposableBean || StrUtil.isNotEmpty(beanDefinition.getDestroyMethodName())) {
             registerDisposableBean(beanName, new DisposableBeanAdapter(bean, beanName, beanDefinition));
         }
+    }
+
+    //---------------------------------------------------------------------
+    // Implementation of ConfigurableBeanFactory interface
+    //---------------------------------------------------------------------
+
+    @Override
+    public void addBeanPostProcessor(BeanPostProcessor beanPostProcessor) {
+        Assert.notNull(beanPostProcessor, "BeanPostProcessor must not be null");
+        synchronized (this.beanPostProcessors) {
+            // Remove from old position, if any
+            this.beanPostProcessors.remove(beanPostProcessor);
+            // Add to end of list
+            this.beanPostProcessors.add(beanPostProcessor);
+        }
+    }
+
+    @Override
+    public void setBeanClassLoader(ClassLoader beanClassLoader) {
+        this.beanClassLoader = (beanClassLoader != null ? beanClassLoader : ClassUtils.getDefaultClassLoader());
+    }
+
+    @Override
+    public ClassLoader getBeanClassLoader() {
+        return this.beanClassLoader;
     }
 
 }

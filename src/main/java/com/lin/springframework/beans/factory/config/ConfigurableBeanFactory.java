@@ -27,4 +27,22 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
      */
     void destroySingletons();
 
+    /**
+     * Set the class loader to use for loading bean classes.
+     * Default is the thread context class loader.
+     * <p>Note that this class loader will only apply to bean definitions
+     * that do not carry a resolved bean class yet. This is the case as of
+     * Spring 2.0 by default: Bean definitions only carry bean class names,
+     * to be resolved once the factory processes the bean definition.
+     * @param beanClassLoader the class loader to use,
+     * or {@code null} to suggest the default class loader
+     */
+    void setBeanClassLoader(ClassLoader beanClassLoader);
+
+    /**
+     * Return this factory's class loader for loading bean classes
+     * (only {@code null} if even the system ClassLoader isn't accessible).
+     */
+    ClassLoader getBeanClassLoader();
+
 }
