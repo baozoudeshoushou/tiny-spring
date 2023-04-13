@@ -15,6 +15,7 @@ import com.lin.springframework.common.MyBeanPostProcessor;
 import com.lin.springframework.context.support.ClassPathXmlApplicationContext;
 import com.lin.springframework.core.io.DefaultResourceLoader;
 import com.lin.springframework.core.io.Resource;
+import com.lin.springframework.event.CustomEvent;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -121,5 +122,13 @@ public class ApiTest {
         // 4. 打印十六进制哈希
         System.out.println(userService01 + " 十六进制哈希：" + Integer.toHexString(userService01.hashCode()));
     }
+
+    @Test
+    public void test_event() {
+        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:spring.xml");
+        applicationContext.publishEvent(new CustomEvent(applicationContext, 1019129009086763L, "成功了！"));
+        applicationContext.registerShutdownHook();
+    }
+
 
 }

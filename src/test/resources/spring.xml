@@ -10,4 +10,10 @@
         <property name="userDao" ref="proxyUserDao"/>
     </bean>
 
+    <bean class="com.lin.springframework.event.CustomEventListener"/>
+
+    <bean class="com.lin.springframework.event.ContextRefreshedEventListener"/>
+
+    <bean class="com.lin.springframework.event.ContextClosedEventListener"/>
+
 </beans>
