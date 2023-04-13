@@ -1,8 +1,15 @@
 package com.lin.springframework;
 
 import cn.hutool.core.io.IoUtil;
+import com.lin.springframework.aop.TargetSource;
+import com.lin.springframework.aop.aspectj.AspectJExpressionPointcut;
+import com.lin.springframework.aop.framework.AdvisedSupport;
+import com.lin.springframework.aop.framework.CglibAopProxy;
+import com.lin.springframework.aop.framework.JdkDynamicAopProxy;
+import com.lin.springframework.bean.IUserService;
 import com.lin.springframework.bean.UserDao;
 import com.lin.springframework.bean.UserService;
+import com.lin.springframework.bean.UserServiceInterceptor;
 import com.lin.springframework.beans.PropertyValue;
 import com.lin.springframework.beans.PropertyValues;
 import com.lin.springframework.beans.factory.config.BeanDefinition;
@@ -21,6 +28,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 
 /**
  * @Author linjiayi5
@@ -130,5 +138,36 @@ public class ApiTest {
         applicationContext.registerShutdownHook();
     }
 
+    @Test
+    public void test_aop() throws NoSuchMethodException {
+        AspectJExpressionPointcut pointcut = new AspectJExpressionPointcut("execution(* com.lin.springframework.bean.UserService.*(..))");
+        Class<UserService> clazz = UserService.class;
+        Method method = clazz.getDeclaredMethod("queryUserInfo");
+        System.out.println(pointcut.matches(clazz));
+        System.out.println(pointcut.matches(method, clazz));
+    }
+
+    @Test
+    public void test_dynamic() {
+        // 目标对象
+        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:spring.xml");
+        IUserService userService = (IUserService) applicationContext.getBean("userService");;
+
+        // 组装代理信息
+        AdvisedSupport advisedSupport = new AdvisedSupport();
+        advisedSupport.setTargetSource(new TargetSource(userService));
+        advisedSupport.setMethodInterceptor(new UserServiceInterceptor());
+        advisedSupport.setMethodMatcher(new AspectJExpressionPointcut("execution(* com.lin.springframework.bean.IUserService.*(..))"));
+
+        // 代理对象(JdkDynamicAopProxy)
+        IUserService proxy_jdk = (IUserService) new JdkDynamicAopProxy(advisedSupport).getProxy();
+        // 测试调用
+        System.out.println("测试结果：" + proxy_jdk.queryUserInfo());
+
+        // 代理对象(Cglib2AopProxy)
+//        IUserService proxy_cglib = (IUserService) new CglibAopProxy(advisedSupport).getProxy();
+        // 测试调用
+//        System.out.println("测试结果：" + proxy_cglib.register("花花"));
+    }
 
 }

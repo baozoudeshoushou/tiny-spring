@@ -5,7 +5,10 @@ import com.lin.springframework.beans.factory.*;
 import com.lin.springframework.context.ApplicationContext;
 import com.lin.springframework.context.ApplicationContextAware;
 
-public class UserService implements InitializingBean, DisposableBean, BeanNameAware, BeanClassLoaderAware, ApplicationContextAware, BeanFactoryAware {
+import java.util.Random;
+
+public class UserService implements IUserService, InitializingBean, DisposableBean,
+        BeanNameAware, BeanClassLoaderAware, ApplicationContextAware, BeanFactoryAware {
 
     private ApplicationContext applicationContext;
 
@@ -19,8 +22,19 @@ public class UserService implements InitializingBean, DisposableBean, BeanNameAw
 
     private IUserDao userDao;
 
+    @Override
     public String queryUserInfo() {
         return userDao.queryUserName(uId) + "," + company + "," + location;
+    }
+
+    @Override
+    public String register(String userName) {
+        try {
+            Thread.sleep(new Random(1).nextInt(100));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "注册用户：" + userName + " success！";
     }
 
     @Override
