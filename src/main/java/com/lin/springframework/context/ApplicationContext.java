@@ -1,6 +1,8 @@
 package com.lin.springframework.context;
 
+import com.lin.springframework.beans.factory.HierarchicalBeanFactory;
 import com.lin.springframework.beans.factory.ListableBeanFactory;
+import com.lin.springframework.core.io.ResourceLoader;
 
 /**
  * Central interface to provide configuration for an application.
@@ -10,7 +12,7 @@ import com.lin.springframework.beans.factory.ListableBeanFactory;
  * @Author linjiayi5
  * @Date 2023/4/7 21:12:42
  */
-public interface ApplicationContext extends ListableBeanFactory {
+public interface ApplicationContext extends ListableBeanFactory, HierarchicalBeanFactory, ResourceLoader, ApplicationEventPublisher {
 
 
 }
