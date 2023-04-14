@@ -111,7 +111,7 @@ public class ApiTest {
         ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:spring.xml");
         applicationContext.registerShutdownHook();
         // 2. 获取 Bean 对象调用方法
-        UserService userService = applicationContext.getBean("userService", UserService.class);
+        IUserService userService = applicationContext.getBean("userService", IUserService.class);
         String result = userService.queryUserInfo();
         System.out.println("测试结果：" + result);
     }
@@ -139,7 +139,7 @@ public class ApiTest {
     }
 
     @Test
-    public void test_aop() throws NoSuchMethodException {
+    public void testAspectJExpressionPointcut() throws NoSuchMethodException {
         AspectJExpressionPointcut pointcut = new AspectJExpressionPointcut("execution(* com.lin.springframework.bean.UserService.*(..))");
         Class<UserService> clazz = UserService.class;
         Method method = clazz.getDeclaredMethod("queryUserInfo");
@@ -168,6 +168,13 @@ public class ApiTest {
 //        IUserService proxy_cglib = (IUserService) new CglibAopProxy(advisedSupport).getProxy();
         // 测试调用
 //        System.out.println("测试结果：" + proxy_cglib.register("花花"));
+    }
+
+    @Test
+    public void test_aop() {
+        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:spring.xml");
+        IUserService userService = applicationContext.getBean("userService", IUserService.class);
+        System.out.println("测试结果：" + userService.queryUserInfo());
     }
 
 }

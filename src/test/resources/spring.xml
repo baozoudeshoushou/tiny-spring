@@ -10,10 +10,25 @@
         <property name="userDao" ref="proxyUserDao"/>
     </bean>
 
+    <!-- EventListener   -->
     <bean class="com.lin.springframework.event.CustomEventListener"/>
 
     <bean class="com.lin.springframework.event.ContextRefreshedEventListener"/>
 
     <bean class="com.lin.springframework.event.ContextClosedEventListener"/>
+
+    <!-- AOP   -->
+    <bean class="com.lin.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator"/>
+
+    <bean id="beforeAdvice" class="com.lin.springframework.bean.UserServiceBeforeAdvice"/>
+
+    <bean id="methodInterceptor" class="com.lin.springframework.aop.framework.adapter.MethodBeforeAdviceInterceptor">
+        <property name="advice" ref="beforeAdvice"/>
+    </bean>
+
+    <bean id="pointcutAdvisor" class="com.lin.springframework.aop.aspectj.AspectJExpressionPointcutAdvisor">
+        <property name="expression" value="execution(* com.lin.springframework.bean.IUserService.*(..))"/>
+        <property name="advice" ref="methodInterceptor"/>
+    </bean>
 
 </beans>
