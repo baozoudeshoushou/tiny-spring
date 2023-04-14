@@ -6,10 +6,7 @@ import com.lin.springframework.beans.BeansException;
 import com.lin.springframework.beans.PropertyValue;
 import com.lin.springframework.beans.PropertyValues;
 import com.lin.springframework.beans.factory.*;
-import com.lin.springframework.beans.factory.config.AutowireCapableBeanFactory;
-import com.lin.springframework.beans.factory.config.BeanDefinition;
-import com.lin.springframework.beans.factory.config.BeanPostProcessor;
-import com.lin.springframework.beans.factory.config.BeanReference;
+import com.lin.springframework.beans.factory.config.*;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -27,12 +24,23 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
     protected Object createBean(String beanName, BeanDefinition beanDefinition, Object[] args) throws BeansException {
         Object bean;
         try {
+            // AOP
+            // TODO 这里怎么注入依赖的 bean？
+            bean = resolveBeforeInstantiation(beanName, beanDefinition);
+            if (bean != null) {
+                // 被代理了直接返回
+                return bean;
+            }
+
+            // TODO 循环依赖
+            // 实例化 bean
             bean = createBeanInstance(beanName, beanDefinition, args);
             // 给 Bean 填充属性
             applyPropertyValues(beanName, bean, beanDefinition);
             // 执行 Bean 的初始化方法和 BeanPostProcessor 的前置和后置处理方法
             bean = initializeBean(beanName, bean, beanDefinition);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             throw new BeansException("Instantiation of bean failed", e);
         }
         // 注册实现了 DisposableBean 接口的 Bean 对象
@@ -43,6 +51,26 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
         }
 
         return bean;
+    }
+
+    protected Object resolveBeforeInstantiation(String beanName, BeanDefinition beanDefinition) {
+        Object bean = applyBeanPostProcessorsBeforeInstantiation(beanDefinition.getBeanClass(), beanName);
+        if (bean != null) {
+            bean = applyBeanPostProcessorsAfterInitialization(bean, beanName);
+        }
+        return bean;
+    }
+
+    protected Object applyBeanPostProcessorsBeforeInstantiation(Class<?> beanClass, String beanName) {
+        for (BeanPostProcessor beanPostProcessor : getBeanPostProcessors()) {
+            if (beanPostProcessor instanceof InstantiationAwareBeanPostProcessor instantiationAwareBeanPostProcessor) {
+                Object result = instantiationAwareBeanPostProcessor.postProcessBeforeInstantiation(beanClass, beanName);
+                if (result != null) {
+                    return result;
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -85,14 +113,6 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
             }
             BeanUtil.setFieldValue(bean, name, value);
         }
-    }
-
-    public InstantiationStrategy getInstantiationStrategy() {
-        return instantiationStrategy;
-    }
-
-    public void setInstantiationStrategy(InstantiationStrategy instantiationStrategy) {
-        this.instantiationStrategy = instantiationStrategy;
     }
 
     /**
@@ -174,6 +194,14 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
             result = current;
         }
         return result;
+    }
+
+    public InstantiationStrategy getInstantiationStrategy() {
+        return instantiationStrategy;
+    }
+
+    public void setInstantiationStrategy(InstantiationStrategy instantiationStrategy) {
+        this.instantiationStrategy = instantiationStrategy;
     }
 
 }
