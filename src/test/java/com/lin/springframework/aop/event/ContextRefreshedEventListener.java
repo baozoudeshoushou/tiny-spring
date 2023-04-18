@@ -1,4 +1,4 @@
-package com.lin.springframework.event;
+package com.lin.springframework.aop.event;
 
 import com.lin.springframework.context.ApplicationListener;
 import com.lin.springframework.context.event.ContextRefreshedEvent;

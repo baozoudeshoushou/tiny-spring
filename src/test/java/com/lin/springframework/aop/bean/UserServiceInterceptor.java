@@ -1,4 +1,4 @@
-package com.lin.springframework.bean;
+package com.lin.springframework.aop.bean;
 
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;

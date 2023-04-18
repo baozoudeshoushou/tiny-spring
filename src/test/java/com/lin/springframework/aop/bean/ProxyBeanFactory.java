@@ -1,4 +1,4 @@
-package com.lin.springframework.bean;
+package com.lin.springframework.aop.bean;
 
 import com.lin.springframework.beans.factory.FactoryBean;
 

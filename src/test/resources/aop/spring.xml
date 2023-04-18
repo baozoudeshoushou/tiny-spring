@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans>
 
-    <bean id="proxyUserDao" class="com.lin.springframework.bean.ProxyBeanFactory"/>
+    <bean id="proxyUserDao" class="com.lin.springframework.aop.bean.ProxyBeanFactory"/>
 
-    <bean id="userService" class="com.lin.springframework.bean.UserService" scope="prototype">
+    <bean id="userService" class="com.lin.springframework.aop.bean.UserService" scope="prototype">
         <property name="uId" value="10001"/>
         <property name="company" value="腾讯"/>
         <property name="location" value="深圳"/>
@@ -11,23 +11,23 @@
     </bean>
 
     <!-- EventListener   -->
-    <bean class="com.lin.springframework.event.CustomEventListener"/>
+    <bean class="com.lin.springframework.aop.event.CustomEventListener"/>
 
-    <bean class="com.lin.springframework.event.ContextRefreshedEventListener"/>
+    <bean class="com.lin.springframework.aop.event.ContextRefreshedEventListener"/>
 
-    <bean class="com.lin.springframework.event.ContextClosedEventListener"/>
+    <bean class="com.lin.springframework.aop.event.ContextClosedEventListener"/>
 
     <!-- AOP   -->
     <bean class="com.lin.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator"/>
 
-    <bean id="beforeAdvice" class="com.lin.springframework.bean.UserServiceBeforeAdvice"/>
+    <bean id="beforeAdvice" class="com.lin.springframework.aop.bean.UserServiceBeforeAdvice"/>
 
     <bean id="methodInterceptor" class="com.lin.springframework.aop.framework.adapter.MethodBeforeAdviceInterceptor">
         <property name="advice" ref="beforeAdvice"/>
     </bean>
 
     <bean id="pointcutAdvisor" class="com.lin.springframework.aop.aspectj.AspectJExpressionPointcutAdvisor">
-        <property name="expression" value="execution(* com.lin.springframework.bean.IUserService.*(..))"/>
+        <property name="expression" value="execution(* com.lin.springframework.aop.bean.IUserService.*(..))"/>
         <property name="advice" ref="methodInterceptor"/>
     </bean>
 

@@ -1,28 +1,25 @@
-package com.lin.springframework;
+package com.lin.springframework.aop;
 
 import cn.hutool.core.io.IoUtil;
-import com.lin.springframework.aop.TargetSource;
 import com.lin.springframework.aop.aspectj.AspectJExpressionPointcut;
+import com.lin.springframework.aop.bean.UserService;
 import com.lin.springframework.aop.framework.AdvisedSupport;
-import com.lin.springframework.aop.framework.CglibAopProxy;
 import com.lin.springframework.aop.framework.JdkDynamicAopProxy;
-import com.lin.springframework.bean.IUserService;
-import com.lin.springframework.bean.UserDao;
-import com.lin.springframework.bean.UserService;
-import com.lin.springframework.bean.UserServiceInterceptor;
+import com.lin.springframework.aop.bean.IUserService;
+import com.lin.springframework.aop.bean.UserDao;
+import com.lin.springframework.aop.bean.UserServiceInterceptor;
 import com.lin.springframework.beans.PropertyValue;
 import com.lin.springframework.beans.PropertyValues;
 import com.lin.springframework.beans.factory.config.BeanDefinition;
 import com.lin.springframework.beans.factory.config.BeanReference;
 import com.lin.springframework.beans.factory.support.DefaultListableBeanFactory;
-import com.lin.springframework.beans.factory.support.SimpleInstantiationStrategy;
 import com.lin.springframework.beans.factory.xml.XmlBeanDefinitionReader;
-import com.lin.springframework.common.MyBeanFactoryPostProcessor;
-import com.lin.springframework.common.MyBeanPostProcessor;
+import com.lin.springframework.aop.common.MyBeanFactoryPostProcessor;
+import com.lin.springframework.aop.common.MyBeanPostProcessor;
 import com.lin.springframework.context.support.ClassPathXmlApplicationContext;
 import com.lin.springframework.core.io.DefaultResourceLoader;
 import com.lin.springframework.core.io.Resource;
-import com.lin.springframework.event.CustomEvent;
+import com.lin.springframework.aop.event.CustomEvent;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -133,14 +130,14 @@ public class ApiTest {
 
     @Test
     public void test_event() {
-        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:spring.xml");
+        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:aop/spring.xml");
         applicationContext.publishEvent(new CustomEvent(applicationContext, 1019129009086763L, "成功了！"));
         applicationContext.registerShutdownHook();
     }
 
     @Test
     public void testAspectJExpressionPointcut() throws NoSuchMethodException {
-        AspectJExpressionPointcut pointcut = new AspectJExpressionPointcut("execution(* com.lin.springframework.bean.UserService.*(..))");
+        AspectJExpressionPointcut pointcut = new AspectJExpressionPointcut("execution(* com.lin.springframework.aop.bean.UserService.*(..))");
         Class<UserService> clazz = UserService.class;
         Method method = clazz.getDeclaredMethod("queryUserInfo");
         System.out.println(pointcut.matches(clazz));
@@ -150,14 +147,14 @@ public class ApiTest {
     @Test
     public void test_dynamic() {
         // 目标对象
-        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:spring.xml");
+        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:aop/spring.xml");
         IUserService userService = (IUserService) applicationContext.getBean("userService");;
 
         // 组装代理信息
         AdvisedSupport advisedSupport = new AdvisedSupport();
         advisedSupport.setTargetSource(new TargetSource(userService));
         advisedSupport.setMethodInterceptor(new UserServiceInterceptor());
-        advisedSupport.setMethodMatcher(new AspectJExpressionPointcut("execution(* com.lin.springframework.bean.IUserService.*(..))"));
+        advisedSupport.setMethodMatcher(new AspectJExpressionPointcut("execution(* com.lin.springframework.aop.bean.IUserService.*(..))"));
 
         // 代理对象(JdkDynamicAopProxy)
         IUserService proxy_jdk = (IUserService) new JdkDynamicAopProxy(advisedSupport).getProxy();
@@ -172,7 +169,7 @@ public class ApiTest {
 
     @Test
     public void test_aop() {
-        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:spring.xml");
+        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:aop/spring.xml");
         IUserService userService = applicationContext.getBean("userService", IUserService.class);
         System.out.println("测试结果：" + userService.queryUserInfo());
     }

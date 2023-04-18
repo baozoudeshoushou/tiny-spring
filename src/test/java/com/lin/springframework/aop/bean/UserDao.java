@@ -1,4 +1,4 @@
-package com.lin.springframework.bean;
+package com.lin.springframework.aop.bean;
 
 import java.util.HashMap;
 import java.util.Map;

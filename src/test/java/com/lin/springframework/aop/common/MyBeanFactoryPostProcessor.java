@@ -1,4 +1,4 @@
-package com.lin.springframework.common;
+package com.lin.springframework.aop.common;
 
 import com.lin.springframework.beans.BeansException;
 import com.lin.springframework.beans.PropertyValue;

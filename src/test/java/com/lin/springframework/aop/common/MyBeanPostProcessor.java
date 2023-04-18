@@ -1,6 +1,6 @@
-package com.lin.springframework.common;
+package com.lin.springframework.aop.common;
 
-import com.lin.springframework.bean.UserService;
+import com.lin.springframework.aop.bean.UserService;
 import com.lin.springframework.beans.BeansException;
 import com.lin.springframework.beans.factory.config.BeanPostProcessor;
 
