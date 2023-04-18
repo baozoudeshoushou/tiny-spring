@@ -149,7 +149,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
     private void scanPackage(String scanPath) {
         String[] basePackages = StrUtil.splitToArray(scanPath, ',');
         ClassPathBeanDefinitionScanner scanner = new ClassPathBeanDefinitionScanner(getRegistry());
-        scanner.doScan(basePackages);
+        scanner.scan(basePackages);
     }
 
 }

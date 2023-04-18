@@ -26,6 +26,16 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
     }
 
     /**
+     * Perform a scan within the specified base packages.
+     * @param basePackages the packages to check for annotated classes
+     */
+    public void scan(String... basePackages) {
+        doScan(basePackages);
+
+        AnnotationConfigUtils.registerAnnotationConfigProcessors(this.registry);
+    }
+
+    /**
      * Perform a scan within the specified base packages,
      * @param basePackages the packages to check for annotated classes
      */
