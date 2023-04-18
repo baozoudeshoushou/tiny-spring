@@ -4,7 +4,9 @@ import com.lin.springframework.beans.BeansException;
 import com.lin.springframework.beans.factory.ConfigurableListableBeanFactory;
 import com.lin.springframework.beans.factory.config.BeanDefinition;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -15,6 +17,23 @@ import java.util.concurrent.ConcurrentHashMap;
 public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFactory implements BeanDefinitionRegistry, ConfigurableListableBeanFactory {
 
     private final Map<String, BeanDefinition> beanDefinitionMap = new ConcurrentHashMap<>(256);
+
+    @Override
+    public <T> T getBean(Class<T> requiredType) throws BeansException {
+        List<String> beanNames = new ArrayList<>();
+        for (Map.Entry<String, BeanDefinition> entry : beanDefinitionMap.entrySet()) {
+            BeanDefinition beanDefinition = entry.getValue();
+            Class<?> beanClass = beanDefinition.getBeanClass();
+            if (requiredType.isAssignableFrom(beanClass)) {
+                beanNames.add(entry.getKey());
+            }
+        }
+        if (beanNames.size() == 1) {
+            return getBean(beanNames.get(0), requiredType);
+        }
+
+        throw new BeansException(requiredType + "expected single bean but found " + beanNames.size() + ": " + beanNames);
+    }
 
     @Override
     public BeanDefinition getBeanDefinition(String beanName) throws BeansException {
@@ -44,6 +63,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
     public void registerBeanDefinition(String beanName, BeanDefinition beanDefinition) {
         this.beanDefinitionMap.put(beanName, beanDefinition);
     }
+
+    //---------------------------------------------------------------------
+    // Implementation of ListableBeanFactory interface
+    //---------------------------------------------------------------------
 
     @Override
     public <T> Map<String, T> getBeansOfType(Class<T> type) throws BeansException {
