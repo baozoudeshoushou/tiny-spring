@@ -38,6 +38,25 @@ public interface InstantiationAwareBeanPostProcessor extends BeanPostProcessor {
     }
 
     /**
+     * Perform operations after the bean has been instantiated, via a constructor or factory method,
+     * but before Spring property population (from explicit properties or autowiring) occurs.
+     * <p>This is the ideal callback for performing custom field injection on the given bean
+     * instance, right before Spring's autowiring kicks in.
+     * <p>The default implementation returns {@code true}.
+     * @param bean the bean instance created, with properties not having been set yet
+     * @param beanName the name of the bean
+     * @return {@code true} if properties should be set on the bean; {@code false}
+     * if property population should be skipped. Normal implementations should return {@code true}.
+     * Returning {@code false} will also prevent any subsequent InstantiationAwareBeanPostProcessor
+     * instances being invoked on this bean instance.
+     * @throws com.lin.springframework.beans.BeansException in case of errors
+     * @see #postProcessBeforeInstantiation
+     */
+    default boolean postProcessAfterInstantiation(Object bean, String beanName) throws BeansException {
+        return true;
+    }
+
+    /**
      * Post-process the given property values before the factory applies them
      * to the given bean.
      * <p>The default implementation returns the given {@code pvs} as-is.
