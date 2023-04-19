@@ -1,9 +1,12 @@
 package com.lin.springframework.beans.factory.support;
 
+import cn.hutool.core.lang.Assert;
 import com.lin.springframework.beans.BeansException;
 import com.lin.springframework.beans.factory.DisposableBean;
+import com.lin.springframework.beans.factory.ObjectFactory;
 import com.lin.springframework.beans.factory.config.SingletonBeanRegistry;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -15,12 +18,31 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class DefaultSingletonBeanRegistry implements SingletonBeanRegistry {
 
+    /**
+     * 一级缓存，已创建的普通对象
+     * Cache of singleton objects: bean name to bean instance.
+     */
     private final Map<String, Object> singletonObjects = new ConcurrentHashMap<>();
 
+    /**
+     * 二级缓存，没有完全初始化的对象，提前暴露
+     * Cache of early singleton objects: bean name to bean instance.
+     */
+    private final Map<String, Object> earlySingletonObjects = new ConcurrentHashMap<>(16);
+
+    /**
+     * 三级缓存，存放代理对象
+     * Cache of singleton factories: bean name to ObjectFactory.
+     */
+    private final Map<String, ObjectFactory<?>> singletonFactories = new HashMap<>(16);
+
+    /** Disposable bean instances: bean name to disposable instance. */
     private final Map<String, DisposableBean> disposableBeans = new LinkedHashMap<>();
 
     @Override
     public void registerSingleton(String beanName, Object singletonObject) {
+        Assert.notNull(beanName, "Bean name must not be null");
+        Assert.notNull(singletonObject, "Singleton object must not be null");
         synchronized (this.singletonObjects) {
             Object oldObject = this.singletonObjects.get(beanName);
             if (oldObject != null) {
@@ -31,18 +53,54 @@ public class DefaultSingletonBeanRegistry implements SingletonBeanRegistry {
         }
     }
 
-    @Override
-    public Object getSingleton(String beanName) {
-        return singletonObjects.get(beanName);
-    }
-
     /**
      * add singleton, this method can be called by subclass
      * @param beanName
      * @param singletonObject
      */
     protected void addSingleton(String beanName, Object singletonObject) {
-        singletonObjects.put(beanName, singletonObject);
+        synchronized (this.singletonObjects) {
+            this.singletonObjects.put(beanName, singletonObject);
+
+            this.singletonFactories.remove(beanName);
+            this.earlySingletonObjects.remove(beanName);
+        }
+    }
+
+    /**
+     * Add the given singleton factory for building the specified singleton
+     * if necessary.
+     * <p>To be called for eager registration of singletons, e.g. to be able to
+     * resolve circular references.
+     * @param beanName the name of the bean
+     * @param singletonFactory the factory for the singleton object
+     */
+    protected void addSingletonFactory(String beanName, ObjectFactory<?> singletonFactory) {
+        Assert.notNull(singletonFactory, "Singleton factory must not be null");
+        synchronized (this.singletonObjects) {
+            if (!this.singletonObjects.containsKey(beanName)) {
+                this.singletonFactories.put(beanName, singletonFactory);
+                this.earlySingletonObjects.remove(beanName);
+            }
+        }
+    }
+
+    @Override
+    public Object getSingleton(String beanName) {
+        Object singletonObject = singletonObjects.get(beanName);
+        if (singletonObject == null) {
+            singletonObject = earlySingletonObjects.get(beanName);
+            if (singletonObject == null) {
+                ObjectFactory<?> singletonFactory = singletonFactories.get(beanName);
+                if (singletonFactory != null) {
+                    singletonObject = singletonFactory.getObject();
+                    // 把三级缓存中的代理对象中的真实对象获取出来，放入二级缓存中
+                    earlySingletonObjects.put(beanName, singletonObject);
+                    singletonFactories.remove(beanName);
+                }
+            }
+        }
+        return singletonObject;
     }
 
     /**

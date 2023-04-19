@@ -20,44 +20,104 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
     private InstantiationStrategy instantiationStrategy = new SimpleInstantiationStrategy();
 
+    /**
+     * Central method of this class: creates a bean instance,
+     * populates the bean instance, applies post-processors, etc.
+     * @see #doCreateBean
+     */
     @Override
     protected Object createBean(String beanName, BeanDefinition beanDefinition, Object[] args) throws BeansException {
-        Object bean;
-        try {
-            // AOP
-            // TODO 这里怎么注入依赖的 bean？
-            bean = resolveBeforeInstantiation(beanName, beanDefinition);
-            if (bean != null) {
-                // 被代理了直接返回
-                return bean;
-            }
+        // AOP, TODO 这里怎么注入依赖的属性？
+        Object bean = resolveBeforeInstantiation(beanName, beanDefinition);
+        if (bean != null) {
+            // 被代理了直接返回
+            return bean;
+        }
 
-            // TODO 循环依赖
-            // 实例化 bean
-            bean = createBeanInstance(beanName, beanDefinition, args);
+        // 常规 bean 的创建
+        return doCreateBean(beanName, beanDefinition, args);
+    }
+
+    /**
+     * Actually create the specified bean. Pre-creation processing has already happened
+     * at this point, e.g. checking {@code postProcessBeforeInstantiation} callbacks.
+     * <p>Differentiates between default bean instantiation, use of a
+     * factory method, and autowiring a constructor.
+     * @param beanName the name of the bean
+     * @param beanDefinition the merged bean definition for the bean
+     * @param args explicit arguments to use for constructor or factory method invocation
+     * @return a new instance of the bean
+     */
+    protected Object doCreateBean(String beanName, BeanDefinition beanDefinition, Object[] args) {
+        Object bean = null;
+
+        // 实例化 bean
+        bean = createBeanInstance(beanName, beanDefinition, args);
+
+        // 处理循环依赖
+        // 是否需要提早曝光
+        boolean earlySingletonExposure = beanDefinition.isSingleton();
+        if (earlySingletonExposure) {
+            Object finalBean = bean;
+            // 将实例化后的Bean对象提前放入缓存中暴露出来
+            // 此外，SmartInstantiationAwareBeanPostProcessor.getEarlyBeanReference() 就是定义在如 AbstractAutoProxyCreator 中
+            addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, beanDefinition, finalBean));
+        }
+
+        // Initialize the bean instance.
+        Object exposedObject = bean;
+        try {
             // 实例化后判断
-            boolean continueWithPropertyPopulation = applyBeanPostProcessorsAfterInstantiation(beanName, bean);
+            boolean continueWithPropertyPopulation = applyBeanPostProcessorsAfterInstantiation(beanName, exposedObject);
             if (!continueWithPropertyPopulation) {
-                return bean;
+                return exposedObject;
             }
             // 在设置 Bean 属性之前，允许 BeanPostProcessor 修改属性值
-            applyBeanPostProcessorsBeforeApplyingPropertyValues(beanName, bean, beanDefinition);
+            applyBeanPostProcessorsBeforeApplyingPropertyValues(beanName, exposedObject, beanDefinition);
             // 给 Bean 填充属性
-            applyPropertyValues(beanName, bean, beanDefinition);
+            applyPropertyValues(beanName, exposedObject, beanDefinition);
             // 执行 Bean 的初始化方法和 BeanPostProcessor 的前置和后置处理方法
-            bean = initializeBean(beanName, bean, beanDefinition);
+            exposedObject = initializeBean(beanName, exposedObject, beanDefinition);
         }
         catch (Exception e) {
             throw new BeansException("Instantiation of bean failed", e);
         }
+
+        if (earlySingletonExposure) {
+            // 获取代理对象
+            Object earlySingletonReference = getSingleton(beanName);
+
+            // 这里似乎没必要调用了，已经在二级缓存中，无所谓在不在一级缓存中。 Spring 中就没有调用
+//            registerSingleton(beanName, bean);
+
+            // 如果 exposedObject 没有在初始化的时候改变，也就是没被增强
+            if (exposedObject == bean) {
+                exposedObject = earlySingletonReference;
+            }
+        }
+
         // 注册实现了 DisposableBean 接口的 Bean 对象
         registerDisposableBeanIfNecessary(beanName, bean, beanDefinition);
 
-        if (beanDefinition.isSingleton()) {
-            addSingleton(beanName, bean);
-        }
+        return exposedObject;
+    }
 
-        return bean;
+    /**
+     * Obtain a reference for early access to the specified bean,
+     * typically for the purpose of resolving a circular reference.
+     * @param beanName the name of the bean (for error handling purposes)
+     * @param mbd the merged bean definition for the bean
+     * @param bean the raw bean instance
+     * @return the object to expose as bean reference
+     */
+    protected Object getEarlyBeanReference(String beanName, BeanDefinition mbd, Object bean) {
+        Object exposedObject = bean;
+        for (BeanPostProcessor beanPostProcessor : getBeanPostProcessors()) {
+            if (beanPostProcessor instanceof SmartInstantiationAwareBeanPostProcessor bp) {
+                exposedObject = bp.getEarlyBeanReference(bean, beanName);
+            }
+        }
+        return exposedObject;
     }
 
     protected Object resolveBeforeInstantiation(String beanName, BeanDefinition beanDefinition) {
