@@ -15,7 +15,6 @@ import com.lin.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.aopalliance.aop.Advice;
 import org.aopalliance.intercept.MethodInterceptor;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 
 /**
@@ -33,38 +32,35 @@ public class DefaultAdvisorAutoProxyCreator implements InstantiationAwareBeanPos
 
     @Override
     public Object postProcessBeforeInstantiation(Class<?> beanClass, String beanName) throws BeansException {
-        if (isInfrastructureClass(beanClass)) {
-            return null;
+        return null;
+    }
+
+    @Override
+    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+        if (isInfrastructureClass(bean.getClass())) {
+            return bean;
         }
 
         Collection<AspectJExpressionPointcutAdvisor> advisors = beanFactory.getBeansOfType(AspectJExpressionPointcutAdvisor.class).values();
         for (AspectJExpressionPointcutAdvisor advisor : advisors) {
             Pointcut pointcut = advisor.getPointcut();
             ClassFilter classFilter = pointcut.getClassFilter();
-            if (!classFilter.matches(beanClass)) {
+            if (!classFilter.matches(bean.getClass())) {
                 continue;
             }
 
             AdvisedSupport advisedSupport = new AdvisedSupport();
 
-            TargetSource targetSource;
-            try {
-                targetSource = new TargetSource(beanClass.getDeclaredConstructor().newInstance());
-            } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
-                     NoSuchMethodException e) {
-                throw new RuntimeException(e);
-            }
-
+            TargetSource targetSource = new TargetSource(bean);
             advisedSupport.setTargetSource(targetSource);
-            // ?
             advisedSupport.setMethodInterceptor((MethodInterceptor) advisor.getAdvice());
             advisedSupport.setMethodMatcher(advisor.getPointcut().getMethodMatcher());
             advisedSupport.setProxyTargetClass(false);
-
+            // 返回代理对象
             return new ProxyFactory(advisedSupport).getProxy();
         }
 
-        return null;
+        return bean;
     }
 
     /**
