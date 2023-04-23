@@ -8,12 +8,10 @@ package com.lin.springframework.aop.framework;
  * @Author linjiayi5
  * @Date 2023/4/13 20:54:46
  */
-public class ProxyFactory {
+public class ProxyFactory extends AdvisedSupport {
 
-    private AdvisedSupport advisedSupport;
+    public ProxyFactory() {
 
-    public ProxyFactory(AdvisedSupport advisedSupport) {
-        this.advisedSupport = advisedSupport;
     }
 
     public Object getProxy() {
@@ -21,10 +19,10 @@ public class ProxyFactory {
     }
 
     private AopProxy createAopProxy() {
-        if (advisedSupport.isProxyTargetClass()) {
-            return new CglibAopProxy(advisedSupport);
+        if (this.isProxyTargetClass() || this.getTargetSource().getTargetClass().length == 0) {
+            return new CglibAopProxy(this);
         }
-        return new JdkDynamicAopProxy(advisedSupport);
+        return new JdkDynamicAopProxy(this);
     }
 
 

@@ -61,6 +61,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
             Object finalBean = bean;
             // 将实例化后的Bean对象提前放入缓存中暴露出来
             // 此外，SmartInstantiationAwareBeanPostProcessor.getEarlyBeanReference() 就是定义在如 AbstractAutoProxyCreator 中
+            // getEarlyBeanReference 就是用来暴露代理对象，解决代理对象的循环依赖问题
             addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, beanDefinition, finalBean));
         }
 
@@ -86,23 +87,24 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
         if (earlySingletonExposure) {
             // 获取代理对象
             Object earlySingletonReference = getSingleton(beanName);
-
-            // 这里似乎没必要调用了，已经在二级缓存中，无所谓在不在一级缓存中。 Spring 中就没有调用
-//            registerSingleton(beanName, bean);
+            // 进入一级缓存
+            addSingleton(beanName, earlySingletonReference);
 
             // 如果 exposedObject 没有在初始化的时候改变，也就是没被增强
-            if (exposedObject == bean) {
-                exposedObject = earlySingletonReference;
-            }
+//            if (exposedObject == bean) {
+//                exposedObject = earlySingletonReference;
+//            }
         }
 
         // 注册实现了 DisposableBean 接口的 Bean 对象
-        registerDisposableBeanIfNecessary(beanName, bean, beanDefinition);
+        registerDisposableBeanIfNecessary(beanName, exposedObject, beanDefinition);
 
         return exposedObject;
     }
 
     /**
+     * 增加二级缓存，不能解决有代理对象时的循环依赖。原因是放进二级缓存 earlySingletonObjects 中的 bean 是实例化后的 bean，
+     * 而放进一级缓存 singletonObjects 中的 bean 是代理对象（代理对象在 BeanPostProcessor#postProcessAfterInitialization 中返回），两个缓存中的 bean不一致。
      * Obtain a reference for early access to the specified bean,
      * typically for the purpose of resolving a circular reference.
      * @param beanName the name of the bean (for error handling purposes)

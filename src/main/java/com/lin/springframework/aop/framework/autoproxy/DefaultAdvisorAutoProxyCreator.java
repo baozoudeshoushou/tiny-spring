@@ -11,19 +11,24 @@ import com.lin.springframework.beans.BeansException;
 import com.lin.springframework.beans.factory.BeanFactory;
 import com.lin.springframework.beans.factory.BeanFactoryAware;
 import com.lin.springframework.beans.factory.config.InstantiationAwareBeanPostProcessor;
+import com.lin.springframework.beans.factory.config.SmartInstantiationAwareBeanPostProcessor;
 import com.lin.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.aopalliance.aop.Advice;
 import org.aopalliance.intercept.MethodInterceptor;
 
 import java.util.Collection;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @Author linjiayi5
  * @Date 2023/4/13 16:48:29
  */
-public class DefaultAdvisorAutoProxyCreator implements InstantiationAwareBeanPostProcessor, BeanFactoryAware {
+public class DefaultAdvisorAutoProxyCreator implements SmartInstantiationAwareBeanPostProcessor, BeanFactoryAware {
 
     private DefaultListableBeanFactory beanFactory;
+
+    private final Map<Object, Object> earlyProxyReferences = new ConcurrentHashMap<>(16);
 
     @Override
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
@@ -37,6 +42,22 @@ public class DefaultAdvisorAutoProxyCreator implements InstantiationAwareBeanPos
 
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+        if (bean != null) {
+            if (this.earlyProxyReferences.remove(beanName) != bean) {
+                return wrapIfNecessary(bean, beanName);
+            }
+        }
+        return bean;
+    }
+
+    @Override
+    public Object getEarlyBeanReference(Object bean, String beanName) throws BeansException {
+        this.earlyProxyReferences.put(beanName, bean);
+        return wrapIfNecessary(bean, beanName);
+    }
+
+    protected Object wrapIfNecessary(Object bean, String beanName) {
+        // AOP 基础类跳过，避免死循环
         if (isInfrastructureClass(bean.getClass())) {
             return bean;
         }
@@ -49,15 +70,16 @@ public class DefaultAdvisorAutoProxyCreator implements InstantiationAwareBeanPos
                 continue;
             }
 
-            AdvisedSupport advisedSupport = new AdvisedSupport();
+            ProxyFactory proxyFactory = new ProxyFactory();
 
             TargetSource targetSource = new TargetSource(bean);
-            advisedSupport.setTargetSource(targetSource);
-            advisedSupport.setMethodInterceptor((MethodInterceptor) advisor.getAdvice());
-            advisedSupport.setMethodMatcher(advisor.getPointcut().getMethodMatcher());
-            advisedSupport.setProxyTargetClass(false);
+            proxyFactory.setTargetSource(targetSource);
+            proxyFactory.setMethodInterceptor((MethodInterceptor) advisor.getAdvice());
+            proxyFactory.setMethodMatcher(advisor.getPointcut().getMethodMatcher());
+            proxyFactory.setProxyTargetClass(false);
             // 返回代理对象
-            return new ProxyFactory(advisedSupport).getProxy();
+            // TODO 这样无法支持多切面
+            return proxyFactory.getProxy();
         }
 
         return bean;
