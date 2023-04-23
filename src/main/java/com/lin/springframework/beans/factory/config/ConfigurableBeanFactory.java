@@ -1,5 +1,6 @@
 package com.lin.springframework.beans.factory.config;
 
+import com.lin.springframework.beans.BeansException;
 import com.lin.springframework.beans.factory.HierarchicalBeanFactory;
 import com.lin.springframework.utils.StringValueResolver;
 
@@ -68,4 +69,12 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
      */
     String resolveEmbeddedValue(String value);
 
+    /**
+     * Determine whether the bean with the given name is a FactoryBean.
+     * @param name the name of the bean to check
+     * @return whether the bean is a FactoryBean
+     * ({@code false} means the bean exists but is not a FactoryBean)
+     * @throws BeansException if there is no bean with the given name
+     */
+    boolean isFactoryBean(String name) throws BeansException;
 }

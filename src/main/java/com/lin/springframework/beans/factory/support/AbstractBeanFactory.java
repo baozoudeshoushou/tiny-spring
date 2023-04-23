@@ -171,4 +171,19 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
         return result;
     }
 
+    @Override
+    public boolean isFactoryBean(String name) throws BeansException {
+        Object beanInstance = getSingleton(name);
+        if (beanInstance != null) {
+            return (beanInstance instanceof FactoryBean);
+        }
+        // No singleton instance found -> check bean definition.
+//        if (!containsBeanDefinition(beanName) && getParentBeanFactory() instanceof ConfigurableBeanFactory cbf) {
+//            // No bean definition found in this factory -> delegate to parent.
+//            return cbf.isFactoryBean(name);
+//        }
+//        return isFactoryBean(beanName, getMergedLocalBeanDefinition(beanName));
+        return false;
+    }
+
 }
