@@ -147,19 +147,19 @@ public class ApiTest {
     @Test
     public void test_dynamic() {
         // 目标对象
-        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:aop/spring.xml");
-        IUserService userService = (IUserService) applicationContext.getBean("userService");;
-
-        // 组装代理信息
-        AdvisedSupport advisedSupport = new AdvisedSupport();
-        advisedSupport.setTargetSource(new TargetSource(userService));
-        advisedSupport.setMethodInterceptor(new UserServiceInterceptor());
-        advisedSupport.setMethodMatcher(new AspectJExpressionPointcut("execution(* com.lin.springframework.aop.bean.IUserService.*(..))"));
-
-        // 代理对象(JdkDynamicAopProxy)
-        IUserService proxy_jdk = (IUserService) new JdkDynamicAopProxy(advisedSupport).getProxy();
-        // 测试调用
-        System.out.println("测试结果：" + proxy_jdk.queryUserInfo());
+//        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:aop/spring.xml");
+//        IUserService userService = (IUserService) applicationContext.getBean("userService");;
+//
+//        // 组装代理信息
+//        AdvisedSupport advisedSupport = new AdvisedSupport();
+//        advisedSupport.setTargetSource(new TargetSource(userService));
+//        advisedSupport.setMethodInterceptor(new UserServiceInterceptor());
+//        advisedSupport.setMethodMatcher(new AspectJExpressionPointcut("execution(* com.lin.springframework.aop.bean.IUserService.*(..))"));
+//
+//        // 代理对象(JdkDynamicAopProxy)
+//        IUserService proxy_jdk = (IUserService) new JdkDynamicAopProxy(advisedSupport).getProxy();
+//        // 测试调用
+//        System.out.println("测试结果：" + proxy_jdk.queryUserInfo());
 
         // 代理对象(Cglib2AopProxy)
 //        IUserService proxy_cglib = (IUserService) new CglibAopProxy(advisedSupport).getProxy();
