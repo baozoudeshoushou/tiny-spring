@@ -1,10 +1,12 @@
 package com.lin.springframework.aop.framework;
 
 import org.aopalliance.intercept.MethodInterceptor;
+import org.aopalliance.intercept.MethodInvocation;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.List;
 
 /**
  * JDK-based {@link AopProxy} implementation for the Spring AOP framework,
@@ -28,12 +30,24 @@ public class JdkDynamicAopProxy implements AopProxy, InvocationHandler {
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        Object target = advised.getTargetSource().getTarget();
-        if (advised.getMethodMatcher().matches(method, target.getClass())) {
-            MethodInterceptor methodInterceptor = advised.getMethodInterceptor();
-            return methodInterceptor.invoke(new ReflectiveMethodInvocation(target, method, args));
+        Object target = this.advised.getTargetSource().getTarget();
+        Class<?> targetClass = target.getClass();
+
+        Object retVal;
+
+        // 当前方法的拦截器链
+        List<Object> chain = this.advised.getInterceptorsAndDynamicInterceptionAdvice(method, targetClass);
+
+        if (chain.isEmpty()) {
+            retVal = method.invoke(target, args);
         }
-        return method.invoke(target, args);
+        else {
+            // 将拦截器封装在 ReflectiveMethodInvocation
+            MethodInvocation invocation = new ReflectiveMethodInvocation(proxy, target, method, args, targetClass, chain);
+            retVal = invocation.proceed();
+        }
+
+        return retVal;
     }
 
 }

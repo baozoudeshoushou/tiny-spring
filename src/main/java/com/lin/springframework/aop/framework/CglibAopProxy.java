@@ -3,8 +3,10 @@ package com.lin.springframework.aop.framework;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
+import org.aopalliance.intercept.MethodInvocation;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 /**
  * CGLIB-based {@link AopProxy} implementation for the Spring AOP framework.
@@ -38,15 +40,25 @@ public class CglibAopProxy implements AopProxy {
         }
 
         @Override
-        public Object intercept(Object obj, Method method, Object[] args, MethodProxy proxy) throws Throwable {
+        public Object intercept(Object proxy, Method method, Object[] args, MethodProxy methodProxy) throws Throwable {
             Object target = advised.getTargetSource().getTarget();
-            CglibMethodInvocation methodInvocation = new CglibMethodInvocation(target, method, args, proxy);
+            Class<?> targetClass = target.getClass();
 
-            if (advised.getMethodMatcher().matches(method, target.getClass())) {
-                return advised.getMethodInterceptor().invoke(methodInvocation);
+            Object retVal;
+
+            // 当前方法的拦截器链
+            List<Object> chain = this.advised.getInterceptorsAndDynamicInterceptionAdvice(method, targetClass);
+
+            if (chain.isEmpty()) {
+                retVal = method.invoke(target, args);
+            }
+            else {
+                // 将拦截器封装在 ReflectiveMethodInvocation
+                CglibMethodInvocation invocation = new CglibMethodInvocation(proxy, target, method, args, targetClass, chain, methodProxy);
+                retVal = invocation.proceed();
             }
 
-            return methodInvocation.proceed();
+            return retVal;
         }
     }
 
@@ -54,14 +66,15 @@ public class CglibAopProxy implements AopProxy {
     private static class CglibMethodInvocation extends ReflectiveMethodInvocation {
         private final MethodProxy methodProxy;
 
-        public CglibMethodInvocation(Object target, Method method, Object[] arguments, MethodProxy methodProxy) {
-            super(target, method, arguments);
+        public CglibMethodInvocation(Object proxy, Object target, Method method, Object[] arguments,
+                                     Class<?> targetClass, List<Object> chain, MethodProxy methodProxy) {
+            super(proxy, target, method, arguments, targetClass, chain);
             this.methodProxy = methodProxy;
         }
 
         @Override
         public Object proceed() throws Throwable {
-            return this.methodProxy.invoke(this.target, this.arguments);
+            return super.proceed();
         }
     }
 

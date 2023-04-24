@@ -63,23 +63,25 @@ public class DefaultAdvisorAutoProxyCreator implements SmartInstantiationAwareBe
         }
 
         Collection<AspectJExpressionPointcutAdvisor> advisors = beanFactory.getBeansOfType(AspectJExpressionPointcutAdvisor.class).values();
+
+        ProxyFactory proxyFactory = new ProxyFactory();
+
         for (AspectJExpressionPointcutAdvisor advisor : advisors) {
             Pointcut pointcut = advisor.getPointcut();
-            ClassFilter classFilter = pointcut.getClassFilter();
-            if (!classFilter.matches(bean.getClass())) {
+            if (!pointcut.getClassFilter().matches(bean.getClass())) {
                 continue;
             }
 
-            ProxyFactory proxyFactory = new ProxyFactory();
-
             TargetSource targetSource = new TargetSource(bean);
             proxyFactory.setTargetSource(targetSource);
-            proxyFactory.setMethodInterceptor((MethodInterceptor) advisor.getAdvice());
+            proxyFactory.addAdvisor(advisor);
             proxyFactory.setMethodMatcher(advisor.getPointcut().getMethodMatcher());
             proxyFactory.setProxyTargetClass(false);
+
             // 返回代理对象
-            // TODO 这样无法支持多切面
-            return proxyFactory.getProxy();
+            if (!proxyFactory.getAdvisors().isEmpty()) {
+                return proxyFactory.getProxy();
+            }
         }
 
         return bean;
