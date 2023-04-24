@@ -75,13 +75,12 @@ public class DefaultAdvisorAutoProxyCreator implements SmartInstantiationAwareBe
             TargetSource targetSource = new TargetSource(bean);
             proxyFactory.setTargetSource(targetSource);
             proxyFactory.addAdvisor(advisor);
-            proxyFactory.setMethodMatcher(advisor.getPointcut().getMethodMatcher());
             proxyFactory.setProxyTargetClass(false);
+        }
 
-            // 返回代理对象
-            if (!proxyFactory.getAdvisors().isEmpty()) {
-                return proxyFactory.getProxy();
-            }
+        // 返回代理对象
+        if (!proxyFactory.getAdvisors().isEmpty()) {
+            return proxyFactory.getProxy();
         }
 
         return bean;

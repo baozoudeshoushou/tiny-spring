@@ -28,9 +28,6 @@ public class AdvisedSupport implements Advised {
     /** 被代理的目标对象 */
     private TargetSource targetSource;
 
-    /** 方法匹配器(检查目标方法是否符合通知条件) */
-    private MethodMatcher methodMatcher;
-
     /** The AdvisorChainFactory to use. */
     AdvisorChainFactory advisorChainFactory = new DefaultAdvisorChainFactory();
 
@@ -89,14 +86,6 @@ public class AdvisedSupport implements Advised {
     @Override
     public TargetSource getTargetSource() {
         return targetSource;
-    }
-
-    public MethodMatcher getMethodMatcher() {
-        return methodMatcher;
-    }
-
-    public void setMethodMatcher(MethodMatcher methodMatcher) {
-        this.methodMatcher = methodMatcher;
     }
 
     /**
